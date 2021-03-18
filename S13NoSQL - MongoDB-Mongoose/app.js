@@ -38,10 +38,11 @@ app.use(shopRoutes);
 app.use(errorController.get404);
 
 mongoose
-  .connect(
-    "mongodb+srv://david:mbJulio2019@cluster0.8xkhg.mongodb.net/shop?retryWrites=true&w=majority",
-    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
-  )
+  .connect("TO ADD", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
   .then((result) => {
     return User.findById("604b85ea1166476116696f67");
   })

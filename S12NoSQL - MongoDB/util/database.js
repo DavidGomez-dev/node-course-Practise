@@ -1,6 +1,5 @@
 const MongoClient = require("mongodb").MongoClient;
-const uri =
-  "mongodb+srv://david:mbJulio2019@cluster0.8xkhg.mongodb.net/shop?retryWrites=true&w=majority";
+const uri = "XXXXX TO ADD";
 //database shop
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
