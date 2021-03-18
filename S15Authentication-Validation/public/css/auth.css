@@ -1,0 +1,8 @@
+.login-form {
+  width: 20rem;
+  padding: 2rem;
+  max-width: 60%;
+  margin: 1rem auto;
+  display: block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+}

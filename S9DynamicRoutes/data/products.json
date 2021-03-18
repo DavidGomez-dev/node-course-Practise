@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "title": "We No speak Americano",
+    "imageUrl": "https://images-na.ssl-images-amazon.com/images/I/517P7CTu4+L._SY344_BO1,204,203,200_.jpg",
+    "price": "19",
+    "description": "We no speak americano es la guía definitiva que necesitas para estudiar, trabajar o vivir en Estados Unidos. "
+  },
+  {
+    "id": "2",
+    "title": "FE Review Manual  ",
+    "imageUrl": "https://images-na.ssl-images-amazon.com/images/I/51lcJUy1IHL._SX385_BO1,204,203,200_.jpg",
+    "description": "FE Review Manual offers a complete review for the FE exam.",
+    "price": "100.02"
+  },
+  {
+    "id": "0.36099637337609236",
+    "title": "FE Reference Handbook V2",
+    "imageUrl": "https://images-na.ssl-images-amazon.com/images/I/41cIa4VmU2L._SX384_BO1,204,203,200_.jpg",
+    "description": "This is the official reference material for the computer-based FE exams.",
+    "price": "21.99"
+  }
+]
