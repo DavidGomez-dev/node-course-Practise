@@ -156,7 +156,7 @@ exports.postEditProduct = (req, res, next) => {
       product.description = updatedDescription;
       if (updatedImage) {
         // we only update the image if there is a new file
-        fileHelper.deleteFile("/public" + product.imageUrl); // Delete the previous file
+        fileHelper.deleteFile("/public" + product.imageUrl, next); // Delete the previous file
         product.imageUrl = updatedImage.path.replace("public", "");
       }
       return product.save();
@@ -180,11 +180,37 @@ exports.deleteProduct = (req, res, next) => {
           "Security alert: attented to product deletion by unauthorited user"
         );
       }
-      fileHelper.deleteFile("/public" + product.imageUrl); // Delete the image
+      fileHelper.deleteFile("/public" + product.imageUrl, next); // Delete the image
       return product.remove();
     })
     .then(() => {
+      //TODO Gestionar el caso donde se elimina un producto que esta en Cart
+      //* Buscarlo en todas las carteras y elminarlo...
       res.redirect("products");
     })
     .catch((err) => errorHandler(err, next));
+};
+
+exports.deleteProductAJAX = (req, res, next) => {
+  const prodId = req.params.productId;
+
+  //Product.findByIdAndRemove(prodId)
+  //Product.deleteone({_id:prodId,userId:req.session.user._id}) //anohter alternative
+  Product.findById(prodId)
+    .then((product) => {
+      if (product.userId.toString() !== req.session.user._id.toString()) {
+        //A user can only delete the product he created
+        return console.log(
+          "Security alert: attented to product deletion by unauthorited user"
+        );
+      }
+      fileHelper.deleteFile("/public" + product.imageUrl, next); // Delete the image
+      return product.remove();
+    })
+    .then(() => {
+      //TODO Gestionar el caso donde se elimina un producto que esta en Cart
+      //* Buscarlo en todas las carteras y elminarlo...
+      res.status(200).json({ message: "Sucess" });
+    })
+    .catch((err) => res.status(500).json({ message: "Deleted error" }));
 };

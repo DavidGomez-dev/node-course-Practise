@@ -22,8 +22,13 @@ Router.get("/orders", isauth, shopController.getOrders);
 
 Router.get("/orders/:orderId", isauth, shopController.getInvoice);
 
-Router.post("/create-order", isauth, shopController.postOrders);
+//Router.post("/create-order", isauth, shopController.postOrders);
 
-// Router.get("/checkout", shopController.getCheckout);
+Router.get("/checkout", isauth, shopController.getCheckout);
+
+//! WATCH OUT: It is important to make sure orders macth payments -> Implemnt webhooks with Stripe
+Router.get("/checkout/success", isauth, shopController.getCheckoutSuccess);
+
+Router.get("/checkout/cancel", isauth, shopController.getCheckout);
 
 module.exports = Router;

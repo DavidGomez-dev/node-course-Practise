@@ -2,6 +2,8 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 const User = require("../models/user");
 
+const stripe = require("stripe")(process.env.STRIPE_SK);
+
 const fs = require("fs");
 const path = require("path");
 
@@ -12,14 +14,30 @@ const errorHandler = require("../util/errorHandler"); //Import a function to han
 const ITEMS_PER_PAGE = 2;
 
 exports.getProducts = (req, res, next) => {
+  const page = req.query.page ? +req.query.page : 1;
+  let totalItems;
+
   Product.find()
-    .lean() // Just to return a POJO Pleain Old Javascript Objscet (save memory)
+    .countDocuments()
+    .then((numProds) => {
+      totalItems = numProds;
+      return Product.find()
+        .skip((page - 1) * ITEMS_PER_PAGE) // Skip the first ones
+        .limit(ITEMS_PER_PAGE); // Limit to show per page
+    })
     .then((products) => {
-      //console.log(req.isLoggedIn);
+      //console.log("Shop", req.session.isLoggedIn);
       res.render("shop/product-list", {
         prods: products,
         pageTitle: "Products list (User view)",
         path: "/product-list",
+        totalProds: totalItems,
+        currentPage: page,
+        hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+        hasPreviousPage: page > 1,
+        nextPage: page + 1,
+        previousPage: page - 1,
+        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
       });
     })
     .catch((err) => errorHandler(err, next));
@@ -42,7 +60,7 @@ exports.getProduct = (req, res, next) => {
 
 exports.getShop = (req, res, next) => {
   // Index page
-  const page = req.query.page ? req.query.page : 1;
+  const page = req.query.page ? +req.query.page : 1;
   let totalItems;
 
   Product.find()
@@ -77,6 +95,7 @@ exports.getCart = (req, res, next) => {
     .populate("cart.items.productId")
     .execPopulate() // For returning a Promise
     .then((user) => {
+      //console.log(user.cart.items);
       res.render("shop/cart", {
         pageTitle: "Your Cart",
         path: "/cart",
@@ -120,6 +139,51 @@ exports.getOrders = (req, res, next) => {
         orders: orders,
       });
     })
+    .catch((err) => errorHandler(err, next));
+};
+
+exports.getCheckout = (req, res, next) => {
+  let products;
+  let total = 0;
+  req.session.user
+    .populate("cart.items.productId")
+    .execPopulate() // For returning a Promise
+    .then((user) => {
+      products = user.cart.items;
+      products.forEach((p) => (total += p.quantity * p.productId.price));
+
+      return stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: products.map((p) => {
+          return {
+            name: p.productId.title,
+            description: p.productId.description,
+            amount: p.productId.price * 100,
+            currency: "eur",
+            quantity: p.quantity,
+          };
+        }),
+        success_url:
+          req.protocol + "://" + req.get("host") + "/checkout/success",
+        cancel_url: req.protocol + "://" + req.get("host") + "/checkout/cancel",
+      });
+    })
+    .then((session) => {
+      res.render("shop/checkout", {
+        pageTitle: "Checkout",
+        path: "/checkout",
+        products: products,
+        totalSum: total,
+        sessionId: session.id,
+      });
+    })
+    .catch((err) => errorHandler(err, next));
+};
+
+exports.getCheckoutSuccess = (req, res, next) => {
+  req.session.user
+    .addOrder()
+    .then(res.redirect("/orders"))
     .catch((err) => errorHandler(err, next));
 };
 

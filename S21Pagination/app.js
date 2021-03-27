@@ -1,4 +1,6 @@
 require("dotenv").config();
+const fs = require("fs");
+//const https = require("https"); // SSL Self certificate
 const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -8,6 +10,9 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf"); //CSFR attack prevention
 const flash = require("connect-flash"); // Flash messages for session Mesages taht ponly are sent once
 const multer = require("multer");
+const helmet = require("helmet");
+const compression = require("compression");
+const morgan = require("morgan");
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
@@ -24,8 +29,6 @@ const store = new MongoDBStore({
   uri: MONGO_DB_URI,
   collection: "sessions",
 });
-
-const csrfProtection = csrf();
 
 // EJS Template
 app.set("view engine", "ejs");
@@ -50,13 +53,21 @@ const fileFilterFun = (req, file, cb) => {
   }
 };
 
+const accLog = fs.createWriteStream(path.join(__dirname, "access.log"), {
+  flags: "a",
+});
+
+app.use(helmet());
+app.use(compression());
+app.use(morgan("combined", { stream: accLog }));
+
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilterFun }).single("image")
 ); //Multer will look for 'image' on the forms name received
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
   session({
-    secret: "mysecret",
+    secret: process.env.SECRET_SESSION_KEY,
     resave: false,
     saveUninitialized: false,
     store: store,
@@ -66,6 +77,7 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 //app.use("/images", express.static(path.join(__dirname, "images"))); //We serve the images statically
 
+const csrfProtection = csrf();
 app.use(csrfProtection);
 app.use(flash());
 
@@ -115,7 +127,15 @@ mongoose
   })
   .then((result) => {
     console.log("Connected to Mongo db using mongoose");
-    app.listen(3000);
+
+    // SSL Self certificate
+    // const privateKey = fs.readFileSync("server.key");
+    // const certificate = fs.readFileSync("server.cert");
+    // https
+    //   .createServer({ key: privateKey, cert: certificate }, app)
+    //   .listen(process.env.PORT || 3000);
+
+    app.listen(process.env.PORT || 3000);
   })
   .catch((err) => {
     console.log(err);
